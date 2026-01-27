@@ -9,6 +9,7 @@ import torchvision.models.detection as detection
 import torchvision.transforms.functional as F
 import torchvision.ops as ops
 import matplotlib.pyplot as plt
+import numpy as np
 import matplotlib.patches as patches
 import random
 import icons
@@ -87,6 +88,7 @@ class PersonDetector:
         train_end,
         val_start,
         val_end,
+        num_train_images,
         num_epochs,
         batch_size,
         lr,
@@ -99,10 +101,13 @@ class PersonDetector:
         self.train_end = train_end
         self.val_start = val_start
         self.val_end = val_end
+        self.num_train_images = num_train_images
         self.num_epochs = num_epochs
         self.batch_size = batch_size
         self.lr = lr
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.accuracy_log = []                    # To log accuracy for 3D plotting: (epoch, num_train_images, mean_iou)
+        self.loss_log = []                        # To log loss for 3D plotting: (epoch, num_train_images, avg_loss)
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")   # Set device
 
         print(icons.device(f" Using device: {self.device}"))
         print(icons.start(f" Training for {self.num_epochs} epochs for range ({self.train_start} - {self.train_end}) of images."))
@@ -172,11 +177,25 @@ class PersonDetector:
             print(icons.steps(f" Epoch [{epoch+1}/{self.num_epochs}] - Loss: {avg_loss:.4f}"))
 
             mean_iou = self.evaluate()
+            
+            # Log accuracy for 3D plotting
+            self.accuracy_log.append(
+            (epoch + 1, self.num_train_images, mean_iou)
+            )
+            
+            # Log loss for 3D plotting
+            self.loss_log.append(
+            (epoch + 1, self.num_train_images, avg_loss)
+            )
+
+            
+            # Update best IoU
             if mean_iou > best_iou:
                 best_iou = mean_iou
-                torch.save(self.model.state_dict(), "best_frcnn_param_model.pth")
-                print(icons.save(" Saved new best model."))
-
+                
+            
+    
+                
         print(icons.check(f" Training complete. Best IoU: {best_iou:.5f}"))
         
 
@@ -220,9 +239,62 @@ class PersonDetector:
                 ax.add_patch(rect)
                 ax.text(x1, y1, f"{score:.2f}", color='yellow', fontsize=8)
             ax.axis('off')
+        
+        # Adjust layout and show    
         plt.tight_layout()
+        
+        # Show the plot
         plt.show()
+        
+    # -------------------------------------
+    def plot_3d_accuracy(self, accuracy_log):
+        epochs = np.array([x[0] for x in accuracy_log])
+        num_images = np.array([x[1] for x in accuracy_log])
+        accuracy = np.array([x[2] for x in accuracy_log])
 
+        # Create a figure for 3D plotting
+        fig = plt.figure(figsize=(10, 7))
+        
+        # Add 3D subplot
+        ax = fig.add_subplot(111, projection='3d')
+
+        # Create the scatter plot
+        ax.scatter(epochs, num_images, accuracy, c=accuracy, cmap='viridis', s=60)
+
+        # Set labels and title
+        ax.set_xlabel("Epoch")
+        ax.set_ylabel("Number of Training Images")
+        ax.set_zlabel("Mean IoU (Accuracy)")
+        ax.set_title("3D Accuracy – Person Detection")
+
+        # Show the plot
+        plt.show()  
+        
+    
+    # ------------------------------------- 
+    def plot_3d_loss(self,loss_log): 
+        epochs = np.array([x[0] for x in loss_log])
+        num_images = np.array([x[1] for x in loss_log])
+        loss = np.array([x[2] for x in loss_log])
+
+        # Create a figure for 3D plotting
+        fig = plt.figure(figsize=(10, 7))
+        
+        # Add 3D subplot
+        ax = fig.add_subplot(111, projection='3d')
+
+        # Create the scatter plot
+        ax.scatter(epochs, num_images, loss, c=loss, cmap='plasma', s=60)
+
+        # Set labels and title
+        ax.set_xlabel("Epoch")
+        ax.set_ylabel("Number of Training Images")
+        ax.set_zlabel("Training Loss")
+        ax.set_title("3D Training Loss – Person Detection")
+
+        # Show the plot
+        plt.show()  
+        
 
 # ======================================
 # Main
@@ -233,14 +305,17 @@ if __name__ == "__main__":
         train_ann="/Users/pubalimazumder/datasets/coco/annotations/instances_train2017.json",
         val_root="/Users/pubalimazumder/datasets/coco/val2017",
         val_ann="/Users/pubalimazumder/datasets/coco/annotations/instances_val2017.json",
-        train_start=5000,
-        train_end=5100,
-        val_start=600,
-        val_end=650,
-        num_epochs=1,
+        train_start=2000,
+        train_end=2100,
+        val_start=500,
+        val_end=600,
+        num_train_images=200,
+        num_epochs=6,
         batch_size=2,
         lr=0.005,
     )
 
     detector.train()
     detector.visualize(num_images=6, score_thresh=0.6)
+    detector.plot_3d_accuracy(detector.accuracy_log)
+    detector.plot_3d_loss(detector.loss_log)
