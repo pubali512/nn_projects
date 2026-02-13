@@ -23,9 +23,9 @@ def set_seed(seed):
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
 
-# =========================
+# =======================================
 # Generate CSV (Synthetic Vehicle Data)
-# =========================
+# =======================================
 def generate_csv(filename, samples, dt, noise_std): 
     time = np.arange(samples) * dt
     
@@ -100,14 +100,10 @@ def create_sequences(X, y, seq_len):
     
     Xs, ys = [], []
     
-    #delta_y = np.diff(y, prepend=y[0])
-    
     for i in range(len(X) - seq_len):
         Xs.append(X[i:i + seq_len])      
         ys.append(y[i + seq_len])
-        #ys.append(y[i+1 : i+seq_len+1])
-
-        
+   
     return np.array(Xs), np.array(ys)
 
 # ==============================================================
