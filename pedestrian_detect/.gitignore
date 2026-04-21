@@ -1,0 +1,45 @@
+# ── Virtual environment ──
+.venv/
+venv/
+env/
+
+# ── Python bytecode ──
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+
+# ── Distribution / packaging ──
+*.egg-info/
+*.egg
+dist/
+build/
+sdist/
+
+# ── IDE / Editor ──
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ── OS files ──
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# ── Jupyter ──
+.ipynb_checkpoints/
+
+# ── Testing / coverage ──
+.coverage
+htmlcov/
+.pytest_cache/
+.tox/
+
+# ── Logs ──
+*.log
+
+# ── External data ──
+external/
+src/output/
